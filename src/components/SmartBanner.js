@@ -30,8 +30,8 @@ class SmartBanner extends Component {
   static defaultProps = {
     daysHidden: 15,
     daysReminder: 90,
-    appStoreLanguage: window.navigator.language.slice(-2) ||
-      window.navigator.userLanguage.slice(-2) || 'us',
+    appStoreLanguage: typeof window !== 'undefined' && (window.navigator.language.slice(-2) ||
+      window.navigator.userLanguage.slice(-2)) || 'us',
     button: 'View',
     storeText: {
       ios: 'On the App Store',
@@ -59,18 +59,19 @@ class SmartBanner extends Component {
   }
 
   setType(deviceType) {
-    const agent = ua(window.navigator.userAgent);
     let type = '';
-
     if (deviceType) { // force set case
       type = deviceType;
-    } else if (agent.os.name === 'Windows Phone' || agent.os.name === 'Windows Mobile') {
-      type = 'windows';
-    // iOS >= 6 has native support for Smart Banner
-    } else if (agent.os.name === 'iOS' && parseInt(agent.os.version, 10) < 6) {
-      type = 'ios';
-    } else if (agent.os.name === 'Android') {
-      type = 'android';
+    } else {
+      const agent = ua(window.navigator.userAgent);
+      if (agent.os.name === 'Windows Phone' || agent.os.name === 'Windows Mobile') {
+        type = 'windows';
+      // iOS >= 6 has native support for Smart Banner
+      } else if (agent.os.name === 'iOS' && parseInt(agent.os.version, 10) < 6) {
+        type = 'ios';
+      } else if (agent.os.name === 'Android') {
+        type = 'android';
+      }
     }
 
     this.setState({
@@ -83,7 +84,7 @@ class SmartBanner extends Component {
   }
 
   parseAppId() {
-    const meta = window.document.querySelector(
+    const meta = typeof window !== 'undefined' && window.document.querySelector(
       `meta[name="${this.state.settings.appMeta}"]`);
 
     if (!meta) {
@@ -189,6 +190,7 @@ class SmartBanner extends Component {
     // 3) user dismissed banner,
     // 4) or we have no app id in meta
     if (!this.state.type
+      || typeof window === 'undefined'
       || window.navigator.standalone
       || cookie.get('smartbanner-closed')
       || cookie.get('smartbanner-installed')) {
